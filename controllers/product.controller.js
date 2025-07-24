@@ -36,6 +36,7 @@ const Product = require('../models/product.model');
 
 const getAllProducts = async (req, res) => {
   try {
+    // testing
     const { category, search, limit = 10, offset = 0 } = req.query;
 
     let query = `
