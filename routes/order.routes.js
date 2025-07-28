@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db.config');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth.middleware');
-
 // Get user orders
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -21,9 +20,12 @@ router.get('/', authMiddleware, async (req, res) => {
       WHERE o.user_id = $1
       GROUP BY o.id
       ORDER BY o.created_at DESC
-    `, [req.user.id]);
+    `,{
+      bind: [req.user.id],
+      type: Sequelize.QueryTypes.SELECT
+    });
     
-    res.json(result.rows);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -31,60 +33,94 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Create order
+const { Sequelize } = require('sequelize');
+
 router.post('/', authMiddleware, async (req, res) => {
-  const client = await pool.connect();
-  
+  const { shipping_address, items } = req.body;
+  const user_id = req.user.id;
+
+  const transaction = await pool.transaction();  // 👈 Start transaction
+
   try {
-    await client.query('BEGIN');
-    
-    const { shipping_address, items } = req.body;
-    const user_id = req.user.id;
-    
-    // Calculate total amount
+    // 1. Calculate total amount
     let total_amount = 0;
     for (const item of items) {
-      const productResult = await client.query('SELECT price FROM products WHERE id = $1', [item.product_id]);
-      total_amount += productResult.rows[0].price * item.quantity;
+      const productResult = await pool.query(
+        'SELECT price FROM products WHERE id = $1',
+        {
+          bind: [item.product_id],
+          type: Sequelize.QueryTypes.SELECT,
+          transaction, // 👈 Add transaction context
+        }
+      );
+      total_amount += productResult[0].price * item.quantity;
     }
-       
-    // Create order
-    const orderResult = await client.query(
+
+    // 2. Create order
+    const orderResult = await pool.query(
       'INSERT INTO orders (user_id, total_amount, shipping_address) VALUES ($1, $2, $3) RETURNING *',
-      [user_id, total_amount, shipping_address]
+      {
+        bind: [user_id, total_amount, shipping_address],
+        type: Sequelize.QueryTypes.SELECT,
+        transaction,
+      }
     );
-    
-    const order = orderResult.rows[0];
-    
-    // Create order items
+
+    const order = orderResult[0];
+
+    // 3. Insert order_items and update stock
     for (const item of items) {
-      const productResult = await client.query('SELECT price FROM products WHERE id = $1', [item.product_id]);
-      const price = productResult.rows[0].price;
-      
-      await client.query(
-        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
-        [order.id, item.product_id, item.quantity, price]
+      const productResult = await pool.query(
+        'SELECT price FROM products WHERE id = $1',
+        {
+          bind: [item.product_id],
+          type: Sequelize.QueryTypes.SELECT,
+          transaction,
+        }
       );
-      
-      // Update stock
-      await client.query(
+      const price = productResult[0].price;
+
+      await pool.query(
+        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
+        {
+          bind: [order.id, item.product_id, item.quantity, price],
+          type: Sequelize.QueryTypes.INSERT, // INSERT instead of SELECT
+          transaction,
+        }
+      );
+
+      await pool.query(
         'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2',
-        [item.quantity, item.product_id]
+        {
+          bind: [item.quantity, item.product_id],
+          type: Sequelize.QueryTypes.UPDATE,
+          transaction,
+        }
       );
     }
-    
-    // Clear cart
-    await client.query('DELETE FROM cart WHERE user_id = $1', [user_id]);
-    
-    await client.query('COMMIT');
+
+    // 4. Clear user's cart
+    // await pool.query(
+    //   'DELETE FROM cart WHERE user_id = $1',
+    //   {
+    //     bind: [user_id],
+    //     type: Sequelize.QueryTypes.DELETE,
+    //     transaction,
+    //   }
+    // );
+  
+    await transaction.commit(); // ✅ COMMIT if all succeeds
     res.status(201).json(order);
+  
   } catch (error) {
-    await client.query('ROLLBACK');
+    await transaction.rollback(); // ❌ ROLLBACK on failure
     console.error(error);
     res.status(500).json({ message: 'Server error' });
-  } finally {
-    client.release();
   }
-});
+});    
+
+
+
 
 // Get single order
 router.get('/:id', authMiddleware, async (req, res) => {
@@ -138,5 +174,8 @@ router.put('/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+
 
 module.exports = router;

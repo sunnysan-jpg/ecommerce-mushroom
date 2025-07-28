@@ -12,7 +12,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'mushroom-products',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
+    allowed_formats: ['jpg', 'jpeg', 'png','webp'],
   },
 });
 

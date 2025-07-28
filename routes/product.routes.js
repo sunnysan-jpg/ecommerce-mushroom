@@ -17,8 +17,8 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth.middlewa
 router.get('/', getAllProducts);
 router.get('/categories', getCategories);
 router.get('/:id', getProduct);
-router.post('/', authMiddleware, adminMiddleware,upload.single('image'),createProduct);
+router.post('/',upload.array('image',10),createProduct);
 router.put('/:id', authMiddleware, adminMiddleware, updateProduct);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
 
-module.exports = router;    
+module.exports = router;      

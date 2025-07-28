@@ -96,28 +96,46 @@ const getProduct = async (req, res) => {
   }  
 };
 
-const createProduct = async (req, res) => {  
+const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category_id, stock_quantity,status } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category_id,
+      stock_quantity,  
+      status,
+    } = req.body;
 
-    const image_url = req.file?.path; // 👈 Cloudinary image URL
+    // Cloudinary URLs from multiple uploaded files
+    const imageUrls = req.files.map(file => file.path);
 
-    const result = await pool.query(
+    const result = await pool.query(  
       `INSERT INTO products 
-      (name, description, price, category_id, stock_quantity, image_url,status) 
-      VALUES ($1, $2, $3, $4, $5, $6,$7) RETURNING *`,
+        (name, description, price, category_id, stock_quantity, image_url, status) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       {
-  bind: [name, description, price, category_id, stock_quantity, image_url,status],
-  type: pool.QueryTypes.INSERT,
-}
+        bind: [
+
+          name,
+          description,
+          price,
+          category_id,
+          stock_quantity,
+          JSON.stringify(imageUrls), // 👈 Save array of URLs as JSON string
+          status,
+        ],
+        type: pool.QueryTypes.INSERT,
+      }
     );
-  
-    res.status(201).json(result.rows);
+
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // const updateProduct = async (req, res) => {
 //   try {

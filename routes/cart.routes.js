@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../config/db.config');
 const { authMiddleware } = require('../middleware/auth.middleware');
 const Sequelize = require('../config/db.config');
+const Cart = require('../models/cart.model');
 // Get user cart
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -34,7 +35,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const existingItem = await pool.query(
       'SELECT * FROM cart WHERE user_id = $1 AND product_id = $2',
       {
-
+   
         bind:[user_id, product_id],
         type: Sequelize.QueryTypes.SELECT
       }
@@ -74,21 +75,41 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const result = await pool.query(
       'UPDATE cart SET quantity = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
-      [quantity, id, user_id]
+      {
+        bind:  [quantity, id, user_id],
+        type: Sequelize.QueryTypes.update
+      }
+    
     );
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Remove from cart
+// remove whole cart - put this first
+router.delete('/clear', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;  // ✅ use req.user.id from middleware
+
+    const deleted = await Cart.destroy({
+      where: { user_id: userId }
+    });
+
+    res.status(200).json({ message: 'Cart cleared successfully', deleted });
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    res.status(500).json({ message: 'Failed to clear cart', error });
+  }
+});
+
+// remove one item - keep this after
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -96,10 +117,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     const result = await pool.query(
       'DELETE FROM cart WHERE id = $1 AND user_id = $2 RETURNING *',
-      [id, user_id]
+      {
+        bind: [id, user_id],
+        type: Sequelize.QueryTypes.DELETE
+      }
     );
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
@@ -109,5 +133,6 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+ 
 
-module.exports = router;
+module.exports = router;  
