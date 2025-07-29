@@ -21,12 +21,12 @@ const orderRoutes = require('./routes/order.routes');
 // Security middleware first
 app.use(helmet()); // 🛡️ Set secure headers
 app.use(cors({
-  origin: 'https://ubiquitous-heliotrope-531f72.netlify.app/', // ✅ No trailing slash
+  origin: 'https://ubiquitous-heliotrope-531f72.netlify.app', // ✅ No trailing slash
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://ubiquitous-heliotrope-531f72.netlify.app/');
+  res.header('Access-Control-Allow-Origin', 'https://ubiquitous-heliotrope-531f72.netlify.app');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
