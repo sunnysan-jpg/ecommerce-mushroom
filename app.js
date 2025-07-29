@@ -21,7 +21,7 @@ const orderRoutes = require('./routes/order.routes');
 // Security middleware first
 app.use(helmet()); // 🛡️ Set secure headers
 app.use(cors({
-  origin: 'https://ubiquitous-heliotrope-531f72.netlify.app', // ✅ No trailing slash
+  origin: ['https://ubiquitous-heliotrope-531f72.netlify.app','https://teal-chimera-cf3b26.netlify.app'], // ✅ No trailing slash
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
