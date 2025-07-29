@@ -20,7 +20,7 @@ const orderRoutes = require('./routes/order.routes');
 
 // Security middleware first
 app.use(helmet()); // 🛡️ Set secure headers
-app.use(cors({ origin: 'http://localhost:4200', credentials: true })); // Enable CORS
+app.use(cors({ origin: 'https://verdant-cheesecake-b2f6f3.netlify.app/', credentials: true })); // Enable CORS
 app.use(express.json()); // Parse JSON body
 app.use(cookieParser()); // Parse cookies
 app.use(rateLimit({ // ⛔ Prevent brute-force
