@@ -18,7 +18,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth.middlewa
 router.get('/', getAllProducts);
 router.get('/categories', getCategories);
 router.post('/addcat',createCategories)
-router.get('/:id',authMiddleware,adminMiddleware, getProduct);
+router.get('/:id', getProduct);
 router.post('/',upload.array('image',10),createProduct);
 router.put('/:id', authMiddleware, adminMiddleware, updateProduct);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
