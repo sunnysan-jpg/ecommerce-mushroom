@@ -226,11 +226,42 @@ const getCategories = async (req, res) => {
   }
 };
 
+
+
+const createCategories = async (req, res) => {
+  try {
+    const {
+      name,
+      description
+    } = req.body;
+
+
+    const result = await pool.query(  
+      `INSERT INTO categories 
+        (name, description) 
+       VALUES ($1, $2) RETURNING *`,
+      {
+        bind: [
+          name,
+          description
+        ],
+        type: pool.QueryTypes.INSERT,
+      }
+    );
+
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error creating categories:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
-  getCategories
+  getCategories,
+  createCategories
 };
