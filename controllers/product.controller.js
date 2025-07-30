@@ -129,7 +129,7 @@ const createProduct = async (req, res) => {
       }
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ message: 'Server error' });
