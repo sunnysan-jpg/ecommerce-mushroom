@@ -45,9 +45,13 @@ router.post('/', authMiddleware, async (req, res) => {
       // Update quantity
       const result = await pool.query(
         'UPDATE cart SET quantity = quantity + $1 WHERE user_id = $2 AND product_id = $3 RETURNING *',
-        [quantity, user_id, product_id]
+        {
+          bind: [quantity, user_id, product_id],
+          type: Sequelize.QueryTypes.update
+        }
+       
       );
-      res.json(result.rows[0]);
+      res.json(result.rows);  
     } else {
       // Add new item
       const result = await pool.query(
