@@ -60,7 +60,7 @@ try {
     // ====== Call an OpenAI-compatible chat API ======
     const base = process.env.AI_BASE_URL || 'https://api.openai.com/v1';
     const model = process.env.AI_MODEL || 'gpt-4o-mini';
-    const apiKey = process.env.API_KEYs ;
+    const apiKey = process.env.API_KEYs ;   
     if (!apiKey) return res.status(500).json({ message: 'AI not configured' });
 
     const r = await fetch(`${base}/chat/completions`, {
