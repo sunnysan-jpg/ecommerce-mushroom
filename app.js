@@ -17,6 +17,7 @@ const productRoutes = require('./routes/product.routes');
 const cartRoutes = require('./routes/cart.routes');
 const orderRoutes = require('./routes/order.routes');
 const paymentRoutes = require('./routes/payment.routes')
+const chatBotRoutes = require('./routes/chatbot.routes')
 
 
 // Security middleware first
@@ -53,7 +54,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/payment',paymentRoutes)
+app.use('/api/payment',paymentRoutes);
+app.use('/api/chat-bot',chatBotRoutes)
 
 // DB connection
 sequelize.sync({ alter: true }).then(() => {
