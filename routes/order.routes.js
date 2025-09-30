@@ -38,7 +38,7 @@ const { Sequelize } = require('sequelize');
 router.post('/', authMiddleware, async (req, res) => {
   const { shipping_address, items } = req.body;
   const user_id = req.user.id;
-
+  const currentDate = new Date()
   const transaction = await pool.transaction();  // 👈 Start transaction
 
   try {
@@ -55,12 +55,12 @@ router.post('/', authMiddleware, async (req, res) => {
       );
       total_amount += productResult[0].price * item.quantity;
     }
-
+    
     // 2. Create order
     const orderResult = await pool.query(
-      'INSERT INTO orders (user_id, total_amount, shipping_address) VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO orders (user_id, total_amount, shipping_address,created_at) VALUES ($1, $2, $3,$4) RETURNING *',
       {
-        bind: [user_id, total_amount, shipping_address],
+        bind: [user_id, total_amount, shipping_address,currentDate],
         type: Sequelize.QueryTypes.SELECT,
         transaction,
       }

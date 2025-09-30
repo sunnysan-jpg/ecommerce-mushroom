@@ -37,11 +37,11 @@ app.use((req, res, next) => {
 
 app.use(express.json()); // Parse JSON body
 app.use(cookieParser()); // Parse cookies
-app.use(rateLimit({ // ⛔ Prevent brute-force
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests from this IP. Try again later.",
-}));
+// app.use(rateLimit({ // ⛔ Prevent brute-force
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+//   message: "Too many requests from this IP. Try again later.",
+// }));
 
 
 app.use(session({ secret: 'secret', resave: false, saveUninitialized: false }));
