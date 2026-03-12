@@ -104,7 +104,7 @@ const googleSuccess = async (req, res) => {
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     // Redirect with token to frontend (Angular)
-    res.redirect(`http://localhost:4200/google-auth-success?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/google-auth-success?token=${token}`);
   } catch (error) {
     console.error("Google login error:", error);
     res.status(500).json({ message: "Google login failed" });
