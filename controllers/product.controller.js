@@ -203,12 +203,11 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
-
-    if (result.rows.length === 0) {
+    const product = await Product.findByPk(id);
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-
+    await product.destroy();
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error(error);
@@ -218,8 +217,45 @@ const deleteProduct = async (req, res) => {
 
 const getCategories = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM categories ORDER BY name');
+    const result = await pool.query('SELECT * FROM categories ORDER BY name', {
+      type: pool.QueryTypes.SELECT
+    });
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    const result = await pool.query(
+      'UPDATE categories SET name = $1, description = $2 WHERE id = $3 RETURNING *',
+      { bind: [name, description, id], type: pool.QueryTypes.UPDATE }
+    );
+    if (!result || result.length === 0) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
     res.json(result[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM categories WHERE id = $1 RETURNING *',
+      { bind: [id], type: pool.QueryTypes.DELETE }
+    );
+    if (!result || result.length === 0) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    res.json({ message: 'Category deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -263,5 +299,7 @@ module.exports = {
   updateProduct,
   deleteProduct,
   getCategories,
-  createCategories
+  createCategories,
+  updateCategory,
+  deleteCategory
 };

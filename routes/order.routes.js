@@ -1,7 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db.config');
+const { Sequelize } = require('sequelize');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth.middleware');
+
+// Admin: Get ALL orders with user info
+router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT o.*, u.name as user_name, u.email as user_email,
+             json_agg(json_build_object(
+               'product_id', oi.product_id,
+               'product_name', p.name,
+               'quantity', oi.quantity,
+               'price', oi.price,
+               'image_url', p.image_url
+             )) as items
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.id
+      GROUP BY o.id, u.name, u.email
+      ORDER BY o.created_at DESC
+    `, {
+      type: Sequelize.QueryTypes.SELECT
+    });
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get user orders
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -33,8 +63,6 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Create order
-const { Sequelize } = require('sequelize');
-
 router.post('/', authMiddleware, async (req, res) => {
   const { shipping_address, items } = req.body;
   const user_id = req.user.id;
@@ -127,7 +155,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`
-      SELECT o.*, 
+      SELECT o.*,
              json_agg(json_build_object(
                'product_id', oi.product_id,
                'product_name', p.name,
@@ -140,13 +168,16 @@ router.get('/:id', authMiddleware, async (req, res) => {
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE o.id = $1 AND o.user_id = $2
       GROUP BY o.id
-    `, [id, req.user.id]);
-    
-    if (result.rows.length === 0) {
+    `, {
+      bind: [id, req.user.id],
+      type: Sequelize.QueryTypes.SELECT
+    });
+
+    if (!result || result.length === 0) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    res.json(result.rows[0]);
+
+    res.json(result[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -158,17 +189,20 @@ router.put('/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    
+
     const result = await pool.query(
       'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
-      [status, id]
+      {
+        bind: [status, id],
+        type: Sequelize.QueryTypes.UPDATE
+      }
     );
-    
-    if (result.rows.length === 0) {
+
+    if (!result || result.length === 0) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    res.json(result.rows[0]);
+
+    res.json(result[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

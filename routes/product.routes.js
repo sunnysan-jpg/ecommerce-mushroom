@@ -11,15 +11,19 @@ const {
   updateProduct,
   deleteProduct,
   getCategories,
-  createCategories
+  createCategories,
+  updateCategory,
+  deleteCategory
 } = require('../controllers/product.controller');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth.middleware');
 
 router.get('/', getAllProducts);
 router.get('/categories', getCategories);
-router.post('/addcat',createCategories)
+router.post('/addcat', createCategories);
+router.put('/categories/:id', authMiddleware, adminMiddleware, updateCategory);
+router.delete('/categories/:id', authMiddleware, adminMiddleware, deleteCategory);
 router.get('/:id', getProduct);
-router.post('/',upload.array('image',10),createProduct);
+router.post('/', upload.array('image', 10), createProduct);
 router.put('/:id', authMiddleware, adminMiddleware, updateProduct);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
 
