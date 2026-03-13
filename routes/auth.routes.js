@@ -18,16 +18,9 @@ router.get('/profile', authMiddleware, getProfile);
 
 // google auth
 
-// router.get("/google", passport.authenticate("google", {
-//   scope: ["profile", "email"]
-// }));
-
-// router.get(
-//   "/google/callback",
-//   passport.authenticate("google", { failureRedirect: "/login" }),
-//   googleSuccess // 👈 this handles both login + register
-// );
-
+router.get("/google", passport.authenticate("google", {
+  scope: ["profile", "email"]
+}));
 
 router.get(
   "/google/callback",
