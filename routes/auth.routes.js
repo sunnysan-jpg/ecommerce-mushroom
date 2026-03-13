@@ -33,6 +33,8 @@ router.get(
       const email = profile.emails?.[0]?.value;
       const name = profile.displayName;
 
+          console.log(req.user); // see google profile
+
       if (!email) {
         return res.status(400).send("Google account has no email");
       }
