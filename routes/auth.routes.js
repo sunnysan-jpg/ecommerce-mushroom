@@ -18,14 +18,45 @@ router.get('/profile', authMiddleware, getProfile);
 
 // google auth
 
-router.get("/google", passport.authenticate("google", {
-  scope: ["profile", "email"]
-}));
+// router.get("/google", passport.authenticate("google", {
+//   scope: ["profile", "email"]
+// }));
+
+// router.get(
+//   "/google/callback",
+//   passport.authenticate("google", { failureRedirect: "/login" }),
+//   googleSuccess // 👈 this handles both login + register
+// );
+
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  googleSuccess // 👈 this handles both login + register
+  passport.authenticate("google", { session: false }),
+  async (req, res) => {
+    try {
+
+      const profile = req.user;
+
+      const email = profile.emails?.[0]?.value;
+      const name = profile.displayName;
+
+      if (!email) {
+        return res.status(400).send("Google account has no email");
+      }
+
+      const token = jwt.sign(
+        { email, name },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+      );
+
+      res.redirect(`${process.env.FRONTEND_URL}/googleauthsuccess?token=${token}`);
+
+    } catch (err) {
+      console.error("Google callback error:", err);
+      res.status(500).send(err.message);
+    }
+  }
 );
 
 
