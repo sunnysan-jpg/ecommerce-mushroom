@@ -53,10 +53,10 @@ app.use(cookieParser()); // Parse cookies
 // }));
 
 
-app.use(session({ secret: 'secret', resave: false, saveUninitialized: false }));
+// app.use(session({ secret: 'secret', resave: false, saveUninitialized: false }));
 
 app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.session());
 
 // Import models before syncing DB
 require('./models/user.model');
